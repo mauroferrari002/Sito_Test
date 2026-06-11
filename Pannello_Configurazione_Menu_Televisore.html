@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pannello_Configurazione_Menu_Televisore</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --accent-color: #4CAF50;
+            --copy-color: #9C27B0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+            color: #333;
+            font-size: 0.85rem;
+        }
+
+        .container {
+            max-width: 1350px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1565C0;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            min-width: 1200px;
+        }
+
+        th {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #bbdefb;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 2px;
+            border: 1px solid #eee;
+        }
+
+        tr.dragging {
+            opacity: 0.5;
+            background-color: #e3f2fd;
+            border: 2px dashed #2196F3;
+        }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+
+        .btn-add {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-add:disabled {
+            background-color: #eee;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+        .btn-save {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.1s;
+        }
+
+        .btn-save:active {
+            transform: scale(0.98);
+        }
+
+        .btn-delete {
+            background-color: #ffebee;
+            color: #c62828;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-copy {
+            background-color: #f3e5f5;
+            color: var(--copy-color);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 2px;
+        }
+
+        .btn-copy:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .drag-handle {
+            text-align: center;
+            color: #999;
+            cursor: grab;
+            user-select: none;
+            font-size: 1.2rem;
+            width: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Pannello Configurazione Menu Televisore</h1>
+
+    <div class="table-wrapper">
+        <table id="menuTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Label</th>
+                    <th>Entry</th>
+                    <th>TTS/Audio</th>
+                    <th>Pre-Del</th>
+                    <th>Action Parms</th>
+                    <th>ACTION</th>
+                    <th>ACTION MODE</th>
+                    <th>Post-Del</th>
+                    <th>Sel GOTO-Lab</th>
+                    <th>NO-Sel GOTO-Lab</th>
+                    <th style="width: 80px;">Azioni</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <button id="btnAddRow" class="btn-add" onclick="addRow()">+ AGGIUNGI NUOVA VOCE</button>
+    <button class="btn-save" onclick="handleSave()">SALVA IMPOSTAZIONI</button>
+</div>
+
+<script id="mainLogic">
+    const MAX_ROWS = 12;
+    // Dati che verranno aggiornati dinamicamente nel file scaricato
+    const initialData = [
+        { label: "Start", entry: "Rai Uno", tts: "", pre: "100", aParms: "TVK1", action: "[V_MONKEY]", aMode: "[WAIT_END]", post: "200", sel: "", nosel: "" },
+        { label: "", entry: "Rai Due", tts: "", pre: "", aParms: "TVK2", action: "[V_MONKEY]", aMode: "[WAIT_END]", post: "", sel: "", nosel: "" },
+        { label: "", entry: "Channel One", tts: "ciannel uan", pre: "", aParms: "TVK1, TVK2", action: "[V_MONKEY]", aMode: "[WAIT_END]", post: "", sel: "", nosel: "" },
+        { label: "", entry: "TV OnOff", tts: "", pre: "", aParms: "", action: "", aMode: "", post: "", sel: "Confirm", nosel: "" },
+        { label: "", entry: "Menu Televisore", tts: "", pre: "", aParms: "TV_MENU", action: "[MENU]", aMode: "[END]", post: "", sel: "", nosel: "" },
+        { label: "", entry: "Lettura Libri", tts: "", pre: "", aParms: "KINDLE_MENU", action: "[MENU]", aMode: "[END]", post: "", sel: "", nosel: "" },
+        { label: "Special", entry: "Speciale", tts: "", pre: "", aParms: "", action: "", aMode: "", post: "300", sel: "Special", nosel: "" },
+        { label: "", entry: "Domotica", tts: "", pre: "", aParms: "SMART_HOME_MENU", action: "[MENU]", aMode: "[END]", post: "", sel: "", nosel: "" },
+        { label: "End_Menu", entry: "Termina Menu", tts: "", pre: "", aParms: "", action: "[END]", aMode: "[END]", post: "", sel: "", nosel: "Start" },
+        { label: "Special", entry: "Special", tts: "FILE:Sn.wav", pre: "", aParms: "", action: "[OTHER]", aMode: "[WAIT]", post: "", sel: "End_Menu", nosel: "Start" },
+        { label: "Confirm", entry: "Conferma OnOff", tts: "", pre: "", aParms: "TVPOWER", action: "[V_MONKEY]", aMode: "[END]", post: "", sel: "", nosel: "" },
+        { label: "", entry: "Annulla OnOff", tts: "", pre: "", aParms: "", action: "", aMode: "", post: "", sel: "", nosel: "" }
+    ];
+
+    const tableBody = document.getElementById('tableBody');
+    const btnAddRow = document.getElementById('btnAddRow');
+
+    function checkRowLimit() {
+        const currentRows = tableBody.querySelectorAll('tr').length;
+        const isFull = currentRows >= MAX_ROWS;
+        btnAddRow.disabled = isFull;
+        document.querySelectorAll('.btn-copy').forEach(btn => btn.disabled = isFull);
+    }
+
+    function createRow(data = {}) {
+        const tr = document.createElement('tr');
+        tr.draggable = true;
+        tr.innerHTML = `
+            <td class="drag-handle">☰</td>
+            <td><input type="text" value="${data.label || ''}" class="m-label"></td>
+            <td><input type="text" value="${data.entry || ''}" class="m-entry"></td>
+            <td><input type="text" value="${data.tts || ''}" class="m-tts"></td>
+            <td><input type="text" value="${data.pre || ''}" class="m-pre"></td>
+            <td><input type="text" value="${data.aParms || ''}" class="m-aparms"></td>
+            <td><input type="text" value="${data.action || ''}" class="m-action"></td>
+            <td><input type="text" value="${data.aMode || ''}" class="m-amode"></td>
+            <td><input type="text" value="${data.post || ''}" class="m-post"></td>
+            <td><input type="text" value="${data.sel || ''}" class="m-sel"></td>
+            <td><input type="text" value="${data.nosel || ''}" class="m-nosel"></td>
+            <td>
+                <button class="btn-copy" title="Copia riga" onclick="copyRow(this)">📋</button>
+                <button class="btn-delete" title="Elimina" onclick="this.closest('tr').remove(); checkRowLimit();">X</button>
+            </td>
+        `;
+
+        tr.addEventListener('dragstart', () => tr.classList.add('dragging'));
+        tr.addEventListener('dragend', () => tr.classList.remove('dragging'));
+
+        return tr;
+    }
+
+    function copyRow(button) {
+        if (tableBody.querySelectorAll('tr').length >= MAX_ROWS) return;
+        const currentRow = button.closest('tr');
+        const data = {
+            label: currentRow.querySelector('.m-label').value,
+            entry: currentRow.querySelector('.m-entry').value,
+            tts: currentRow.querySelector('.m-tts').value,
+            pre: currentRow.querySelector('.m-pre').value,
+            aParms: currentRow.querySelector('.m-aparms').value,
+            action: currentRow.querySelector('.m-action').value,
+            aMode: currentRow.querySelector('.m-amode').value,
+            post: currentRow.querySelector('.m-post').value,
+            sel: currentRow.querySelector('.m-sel').value,
+            nosel: currentRow.querySelector('.m-nosel').value
+        };
+        const newRow = createRow(data);
+        currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+        checkRowLimit();
+    }
+
+    tableBody.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggingRow = document.querySelector('.dragging');
+        const afterElement = getDragAfterElement(tableBody, e.clientY);
+        if (afterElement == null) {
+            tableBody.appendChild(draggingRow);
+        } else {
+            tableBody.insertBefore(draggingRow, afterElement);
+        }
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function addRow() {
+        if (tableBody.querySelectorAll('tr').length < MAX_ROWS) {
+            tableBody.appendChild(createRow());
+            checkRowLimit();
+        }
+    }
+
+    function init() {
+        tableBody.innerHTML = "";
+        initialData.forEach(d => tableBody.appendChild(createRow(d)));
+        checkRowLimit();
+    }
+
+    init();
+
+    function downloadFile(content, fileName, contentType) {
+        const a = document.createElement("a");
+        const file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function handleSave() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        const items = Array.from(rows).map(row => ({
+            label: row.querySelector('.m-label').value,
+            entry: row.querySelector('.m-entry').value,
+            tts: row.querySelector('.m-tts').value,
+            pre: row.querySelector('.m-pre').value,
+            aParms: row.querySelector('.m-aparms').value,
+            action: row.querySelector('.m-action').value,
+            aMode: row.querySelector('.m-amode').value,
+            post: row.querySelector('.m-post').value,
+            sel: row.querySelector('.m-sel').value,
+            nosel: row.querySelector('.m-nosel').value
+        }));
+
+        // 1. Formattazione File TXT
+        const sep = "-------------------------------------------------------------------------------------------------------------------------------------------------\n";
+        let txtTable = "// Menu File Name: \"AAA_Main_Menu.txt\"\n[MENU_START]\n\n" + sep;
+        txtTable += "! Label    ! Entry           ! TTS/Audio   ! Pre-Del ! Action Parms    ! ACTION     ! ACTION MODE   ! Post-Del ! Sel GOTO-Lab ! NO-Sel GOTO-Lab !\n";
+        txtTable += "!----------!-----------------!-------------!---------!-----------------!------------!---------------!----------!--------------!-----------------!\n";
+
+        items.forEach(i => {
+            txtTable += `| ${(i.label || "").padEnd(8)} | ${(i.entry || "").padEnd(15)} | ${(i.tts || "").padEnd(11)} | ${(i.pre || "").padEnd(7)} | ${(i.aParms || "").padEnd(15)} | ${(i.action || "").padEnd(10)} | ${(i.aMode || "").padEnd(13)} | ${(i.post || "").padEnd(8)} | ${(i.sel || "").padEnd(12)} | ${(i.nosel || "").padEnd(15)} |\n`;
+        });
+        txtTable += sep + "\n[MENU_END]";
+        downloadFile(txtTable, "AAA_Main_Menu.txt", "text/plain");
+
+        // 2. Aggiornamento e download HTML
+        const newDataJS = `const initialData = ${JSON.stringify(items, null, 2)};`;
+        let currentDoc = document.documentElement.outerHTML;
+        let cleanHtml = currentDoc.replace(/const initialData = \[[\s\S]*?\];/s, newDataJS);
+        downloadFile("<!DOCTYPE html>\n" + cleanHtml, "Pannello_Configurazione_Menu_Televisore.html", "text/html");
+
+        // 3. Reindirizzamento a index.html
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 4000);
+    }
+</script>
+
+</body>
+</html>

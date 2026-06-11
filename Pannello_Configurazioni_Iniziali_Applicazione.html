@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pannello_Configurazioni_Iniziali_Applicazione</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 15px;
+            color: #333;
+        }
+
+        .main-title {
+            text-align: center;
+            color: #1565C0;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .slider-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: -4px; 
+            font-size: 0.85rem;
+            font-family: sans-serif;
+            position: relative;
+            z-index: 1;
+        }
+
+        .val-display, .min-display {
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 30px;
+            cursor: pointer;
+            margin: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Gestione larghezza specifica per il campo Name */
+        .half-width {
+            width: 50% !important;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        button {
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-test {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+            font-weight: 500;
+        }
+
+        .btn-save {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            filter: brightness(0.9);
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+<h1 class="main-title">Pannello di Configurazione</h1>
+
+<div class="container">
+    
+    <section>
+        <h2>Comando esempio Alexa</h2>
+        <p style="margin-bottom: 15px; color: #666;"><em>"Alexa, che ore sono?"</em></p>
+        <div class="form-group">
+            <label>Volume Sintesi Vocale</label>
+            <div class="slider-info">
+                <span class="min-display">20%</span>
+                <span class="val-display" id="v1-val">60%</span>
+            </div>
+            <input type="range" id="alexaVolume" min="20" max="100" value="60" step="10" oninput="updateVal('v1-val', this.value + '%')">
+        </div>
+        <button class="btn-test" onclick="testAlexa()">Pulsante Prova Alexa</button>
+    </section>
+
+    <section>
+        <h2>Volume Sintesi Vocale Menù</h2>
+        <div class="form-group">
+            <label>Regolazione Volume</label>
+            <div class="slider-info">
+                <span class="min-display">0%</span>
+                <span class="val-display" id="v2-val">80%</span>
+            </div>
+            <input type="range" id="menuVolume" min="0" max="100" value="80" step="10" oninput="updateVal('v2-val', this.value + '%')">
+        </div>
+        <button class="btn-test" onclick="testMenu()">Pulsante Prova Menù</button>
+    </section>
+
+    <section>
+        <h2>Intervallo Scansione Menu</h2>
+        <div class="form-group">
+            <label>Tempo di scansione</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="scan-val">2000 ms</span>
+            </div>
+            <input type="range" id="scanInterval" min="500" max="5000" step="100" value="2000" oninput="updateVal('scan-val', this.value + ' ms')">
+        </div>
+        <button class="btn-test" onclick="testScanInterval()">Pulsante Prova Intervallo</button>
+    </section>
+
+    <section>
+        <h2>Modalità Funzionamento Menu</h2>
+        <div class="radio-group">
+            <label><input type="radio" name="mode" value="Pressione Prolungata" checked> Pressione Prolungata</label>
+            <label><input type="radio" name="mode" value="Multi-click"> Multi-click</label>
+        </div>
+
+        <div class="form-group">
+            <label>1) Esecuzione menu</label>
+            <div class="slider-info">
+                <span class="min-display">0 ms</span>
+                <span class="val-display" id="t1-val">1000 ms</span>
+            </div>
+            <input type="range" id="execMenu" min="0" max="5000" step="100" value="1000" oninput="updateVal('t1-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>2) Selezione voce attiva</label>
+            <div class="slider-info">
+                <span class="min-display">0 ms</span>
+                <span class="val-display" id="t2-val">500 ms</span>
+            </div>
+            <input type="range" id="selectVoice" min="0" max="2500" step="100" value="500" oninput="updateVal('t2-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>3) Chiusura menu aperti</label>
+            <div class="slider-info">
+                <span class="min-display">1000 ms</span>
+                <span class="val-display" id="t3-val">2000 ms</span>
+            </div>
+            <input type="range" id="closeMenu" min="1000" max="5000" step="100" value="2000" oninput="updateVal('t3-val', this.value + ' ms')">
+        </div>
+    </section>
+
+    <section>
+        <h2>Configurazione Avanzata Server & Menu</h2>
+        <div class="form-group">
+            <label>Cmnd_Time_1_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="cmnd-time1-val">1250 ms</span>
+            </div>
+            <input type="range" id="cmndTime1" min="500" max="10000" step="100" value="1250" oninput="updateVal('cmnd-time1-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Cmnd_Time_2_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="cmnd-time2-val">2500 ms</span>
+            </div>
+            <input type="range" id="cmndTime2" min="500" max="10000" step="100" value="2500" oninput="updateVal('cmnd-time2-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Cmnd_Time_3_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="cmnd-time3-val">3500 ms</span>
+            </div>
+            <input type="range" id="cmndTime3" min="500" max="10000" step="100" value="3500" oninput="updateVal('cmnd-time3-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Cmnd_Time_4_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="cmnd-time4-val">7000 ms</span>
+            </div>
+            <input type="range" id="cmndTime4" min="500" max="10000" step="100" value="7000" oninput="updateVal('cmnd-time4-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Cmnd_Time_5_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="cmnd-time5-val">10000 ms</span>
+            </div>
+            <input type="range" id="cmndTime5" min="500" max="10000" step="100" value="10000" oninput="updateVal('cmnd-time5-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Menu_Scan_Interval_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="menu-scan-val">2345 ms</span>
+            </div>
+            <input type="range" id="menuScanInterval" min="500" max="10000" step="100" value="2345" oninput="updateVal('menu-scan-val', this.value + ' ms')">
+        </div>
+        <div class="form-group">
+            <label>Menu_Num_Repeat:</label>
+            <div class="slider-info">
+                <span class="min-display">0</span>
+                <span class="val-display" id="menu-repeat-val">5</span>
+            </div>
+            <input type="range" id="menuRepeat" min="0" max="5" step="1" value="5" oninput="updateVal('menu-repeat-val', this.value)">
+        </div>
+        <div class="form-group">
+            <label>Voice_Monkey_Web_Hook_Post_Delay_MS:</label>
+            <div class="slider-info">
+                <span class="min-display">500 ms</span>
+                <span class="val-display" id="monkey-delay-val">754 ms</span>
+            </div>
+            <input type="range" id="monkeyDelay" min="500" max="2500" step="100" value="754" oninput="updateVal('monkey-delay-val', this.value + ' ms')">
+        </div>
+        
+        <div class="form-group">
+            <label for="monkeyUrl">Voice_Monkey_Base_URL:</label>
+            <input type="text" id="monkeyUrl" placeholder="Inserisci l'URL base qui..." value="">
+        </div>
+
+        <div class="form-group">
+            <label for="monkeyName">Voice_Monkey_Base_Name:</label>
+            <input type="text" id="monkeyName" class="half-width" placeholder="Inserisci nome base qui..." value="">
+        </div>
+
+        <button class="btn-test" onclick="testMonkeyFields()">Prova Testo Voice Monkey</button>
+    </section>
+
+    <button class="btn-save" onclick="handleSave()">SALVA IMPOSTAZIONI</button>
+</div>
+
+<script>
+    function updateVal(id, value) {
+        document.getElementById(id).innerText = value;
+    }
+
+    function copyToClipboard(jsonContent) {
+        const fullString = "[F_App_Data_Start_46432358]\n" + jsonContent + "\n[F_App_Data_End_46432358]";
+        const textArea = document.createElement("textarea");
+        textArea.value = fullString;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+    }
+
+    function testAlexa() {
+        const data = {
+            action: "test_alexa",
+            text: "Alexa, che ore sono?",
+            volume: parseInt(document.getElementById('alexaVolume').value)
+        };
+        copyToClipboard(JSON.stringify(data));
+    }
+
+    function testMonkeyFields() {
+        const data = {
+            action: "test_monkey_fields",
+            base_url: document.getElementById('monkeyUrl').value,
+            base_name: document.getElementById('monkeyName').value
+        };
+        copyToClipboard(JSON.stringify(data));
+    }
+
+    function testMenu() {
+        const data = {
+            action: "test_menu_voice",
+            text: "Prova volume voce menù a scansione",
+            volume: parseInt(document.getElementById('menuVolume').value)
+        };
+        copyToClipboard(JSON.stringify(data));
+    }
+
+    function testScanInterval() {
+        const data = {
+            action: "test_scan",
+            scan_time: parseInt(document.getElementById('scanInterval').value)
+        };
+        copyToClipboard(JSON.stringify(data));
+    }
+
+    function downloadFile(content, fileName, contentType) {
+        const a = document.createElement("a");
+        const file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function handleSave() {
+        const settings = {
+            alexaVol: document.getElementById('alexaVolume').value,
+            menuVol: document.getElementById('menuVolume').value,
+            scanInt: document.getElementById('scanInterval').value,
+            mode: document.querySelector('input[name="mode"]:checked').value,
+            execMenu: document.getElementById('execMenu').value,
+            selVoice: document.getElementById('selectVoice').value,
+            closeMenu: document.getElementById('closeMenu').value,
+            cmndTime1: document.getElementById('cmndTime1').value,
+            cmndTime2: document.getElementById('cmndTime2').value,
+            cmndTime3: document.getElementById('cmndTime3').value,
+            cmndTime4: document.getElementById('cmndTime4').value,
+            cmndTime5: document.getElementById('cmndTime5').value,
+            menuScan: document.getElementById('menuScanInterval').value,
+            menuRepeat: document.getElementById('menuRepeat').value,
+            monkeyDelay: document.getElementById('monkeyDelay').value,
+            monkeyUrl: document.getElementById('monkeyUrl').value,
+            monkeyName: document.getElementById('monkeyName').value
+        };
+
+        let txtContent = "// File Name: \"F_Usr_CFG.txt\"\n\n";
+        txtContent += `:#Voice_Monkey_Base_URL: "${settings.monkeyUrl}"\n`;
+        txtContent += `:#Voice_Monkey_Base_Name: "${settings.monkeyName}"\n`;
+        txtContent += `:#Voice_Monkey_Web_Hook_Post_Delay_MS: ${settings.monkeyDelay}\n`;
+        txtContent += `:#Menu_Num_Repeat: ${settings.menuRepeat}\n`;
+        txtContent += `:#Menu_Scan_Interval_MS: ${settings.menuScan}\n\n`;
+        txtContent += `:#Cmnd_Time_1_MS: ${settings.cmndTime1}\n`;
+        txtContent += `:#Cmnd_Time_2_MS: ${settings.cmndTime2}\n`;
+        txtContent += `:#Cmnd_Time_3_MS: ${settings.cmndTime3}\n`;
+        txtContent += `:#Cmnd_Time_4_MS: ${settings.cmndTime4}\n`;
+        txtContent += `:#Cmnd_Time_5_MS: ${settings.cmndTime5}\n\n`;
+        
+        txtContent += "// Parametri Interfaccia Utente\n";
+        txtContent += `:#Alexa_Volume: ${settings.alexaVol}\n`;
+        txtContent += `:#Menu_Voice_Volume: ${settings.menuVol}\n`;
+        txtContent += `:#General_Scan_Interval: ${settings.scanInt}\n`;
+        txtContent += `:#Menu_Operation_Mode: "${settings.mode}"\n`;
+        txtContent += `:#Exec_Menu_MS: ${settings.execMenu}\n`;
+        txtContent += `:#Select_Voice_MS: ${settings.selVoice}\n`;
+        txtContent += `:#Close_Menu_MS: ${settings.closeMenu}`;
+
+        downloadFile(txtContent, "F_Usr_CFG.txt", "text/plain");
+
+        let currentDoc = document.documentElement.outerHTML;
+        
+        currentDoc = currentDoc.replace(/id="alexaVolume"([^>]*)value="\d+"/, `id="alexaVolume"$1value="${settings.alexaVol}"`);
+        currentDoc = currentDoc.replace(/id="menuVolume"([^>]*)value="\d+"/, `id="menuVolume"$1value="${settings.menuVol}"`);
+        currentDoc = currentDoc.replace(/id="scanInterval"([^>]*)value="\d+"/, `id="scanInterval"$1value="${settings.scanInt}"`);
+        currentDoc = currentDoc.replace(/id="execMenu"([^>]*)value="\d+"/, `id="execMenu"$1value="${settings.execMenu}"`);
+        currentDoc = currentDoc.replace(/id="selectVoice"([^>]*)value="\d+"/, `id="selectVoice"$1value="${settings.selVoice}"`);
+        currentDoc = currentDoc.replace(/id="closeMenu"([^>]*)value="\d+"/, `id="closeMenu"$1value="${settings.closeMenu}"`);
+        currentDoc = currentDoc.replace(/id="cmndTime1"([^>]*)value="\d+"/, `id="cmndTime1"$1value="${settings.cmndTime1}"`);
+        currentDoc = currentDoc.replace(/id="cmndTime2"([^>]*)value="\d+"/, `id="cmndTime2"$1value="${settings.cmndTime2}"`);
+        currentDoc = currentDoc.replace(/id="cmndTime3"([^>]*)value="\d+"/, `id="cmndTime3"$1value="${settings.cmndTime3}"`);
+        currentDoc = currentDoc.replace(/id="cmndTime4"([^>]*)value="\d+"/, `id="cmndTime4"$1value="${settings.cmndTime4}"`);
+        currentDoc = currentDoc.replace(/id="cmndTime5"([^>]*)value="\d+"/, `id="cmndTime5"$1value="${settings.cmndTime5}"`);
+        currentDoc = currentDoc.replace(/id="menuScanInterval"([^>]*)value="\d+"/, `id="menuScanInterval"$1value="${settings.menuScan}"`);
+        currentDoc = currentDoc.replace(/id="menuRepeat"([^>]*)value="\d+"/, `id="menuRepeat"$1value="${settings.menuRepeat}"`);
+        currentDoc = currentDoc.replace(/id="monkeyDelay"([^>]*)value="\d+"/, `id="monkeyDelay"$1value="${settings.monkeyDelay}"`);
+        currentDoc = currentDoc.replace(/id="monkeyUrl"([^>]*)value="[^"]*"/, `id="monkeyUrl"$1value="${settings.monkeyUrl}"`);
+        currentDoc = currentDoc.replace(/id="monkeyName"([^>]*)value="[^"]*"/, `id="monkeyName"$1value="${settings.monkeyName}"`);
+
+        if(settings.mode === "Multi-click") {
+            currentDoc = currentDoc.replace('value="Pressione Prolungata" checked', 'value="Pressione Prolungata"');
+            currentDoc = currentDoc.replace('value="Multi-click"', 'value="Multi-click" checked');
+        } else {
+            currentDoc = currentDoc.replace('value="Pressione Prolungata"', 'value="Pressione Prolungata" checked');
+            currentDoc = currentDoc.replace('value="Multi-click" checked', 'value="Multi-click"');
+        }
+
+        currentDoc = currentDoc.replace(/id="v1-val">[^<]+<\/span>/, `id="v1-val">${settings.alexaVol}%</span>`);
+        currentDoc = currentDoc.replace(/id="v2-val">[^<]+<\/span>/, `id="v2-val">${settings.menuVol}%</span>`);
+        currentDoc = currentDoc.replace(/id="scan-val">[^<]+<\/span>/, `id="scan-val">${settings.scanInt} ms</span>`);
+        currentDoc = currentDoc.replace(/id="t1-val">[^<]+<\/span>/, `id="t1-val">${settings.execMenu} ms</span>`);
+        currentDoc = currentDoc.replace(/id="t2-val">[^<]+<\/span>/, `id="t2-val">${settings.selVoice} ms</span>`);
+        currentDoc = currentDoc.replace(/id="t3-val">[^<]+<\/span>/, `id="t3-val">${settings.closeMenu} ms</span>`);
+        currentDoc = currentDoc.replace(/id="cmnd-time1-val">[^<]+<\/span>/, `id="cmnd-time1-val">${settings.cmndTime1} ms</span>`);
+        currentDoc = currentDoc.replace(/id="cmnd-time2-val">[^<]+<\/span>/, `id="cmnd-time2-val">${settings.cmndTime2} ms</span>`);
+        currentDoc = currentDoc.replace(/id="cmnd-time3-val">[^<]+<\/span>/, `id="cmnd-time3-val">${settings.cmndTime3} ms</span>`);
+        currentDoc = currentDoc.replace(/id="cmnd-time4-val">[^<]+<\/span>/, `id="cmnd-time4-val">${settings.cmndTime4} ms</span>`);
+        currentDoc = currentDoc.replace(/id="cmnd-time5-val">[^<]+<\/span>/, `id="cmnd-time5-val">${settings.cmndTime5} ms</span>`);
+        currentDoc = currentDoc.replace(/id="menu-scan-val">[^<]+<\/span>/, `id="menu-scan-val">${settings.menuScan} ms</span>`);
+        currentDoc = currentDoc.replace(/id="menu-repeat-val">[^<]+<\/span>/, `id="menu-repeat-val">${settings.menuRepeat}</span>`);
+        currentDoc = currentDoc.replace(/id="monkey-delay-val">[^<]+<\/span>/, `id="monkey-delay-val">${settings.monkeyDelay} ms</span>`);
+
+        setTimeout(() => {
+            downloadFile("<!DOCTYPE html>\n" + currentDoc, "Pannello_Configurazioni_Iniziali_Applicazione.html", "text/html");
+        }, 500);
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 4000);
+    }
+</script>
+
+</body>
+</html>
