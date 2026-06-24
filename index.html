@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rilevatore F</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #222; color: white; }
+        #video { transform: scaleX(-1); width: 100%; max-width: 320px; border-radius: 10px; }
+        #status { font-size: 2rem; font-weight: bold; margin-top: 20px; padding: 10px; }
+        .aperta { color: #4CAF50; }
+        .chiusa { color: #F44336; }
+    </style>
+</head>
+<body>
+
+    <h1>Rilevatore Bocca</h1>
+    <video id="video" autoplay playsinline></video>
+    <div id="status">Inizializzazione...</div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const statusElement = document.getElementById('status');
+        
+        let statoBocca = "chiusa"; // Variabile di stato per l'anti-rimbalzo
+        const SOGLIA = 0.025;
+
+        const faceMesh = new FaceMesh({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+        });
+
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        faceMesh.onResults(onResults);
+
+        function onResults(results) {
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+                statusElement.innerText = "Faccia non rilevata";
+                statusElement.className = "";
+                return;
+            }
+
+            const landmarks = results.multiFaceLandmarks[0];
+            const distance = Math.sqrt(
+                Math.pow(landmarks[13].x - landmarks[14].x, 2) + 
+                Math.pow(landmarks[13].y - landmarks[14].y, 2)
+            );
+
+            if (distance > SOGLIA) {
+                if (statoBocca === "chiusa") {
+                    statoBocca = "aperta";
+                    statusElement.innerText = "BOCCA APERTA";
+                    statusElement.className = "aperta";
+                }
+            } else {
+                // TRIGGER: Si attiva solo nel passaggio ESATTO da "aperta" a "chiusa"
+                if (statoBocca === "aperta") {
+                    statoBocca = "chiusa";
+                    statusElement.innerText = "BOCCA CHIUSA";
+                    statusElement.className = "chiusa";
+
+                    // Configurazione dell'Intent Android per MacroDroid
+                    const intentAction = "com.macrodroid.bocca.CHIUSA"; 
+                    const intentUrl = `intent://#Intent;action=${intentAction};end`;
+                    
+                    // Invia l'intent tramite il browser
+                    window.location.href = intentUrl;
+                } else {
+                    // Mantiene lo stato grafico se la bocca era già chiusa
+                    statoBocca = "chiusa";
+                    statusElement.innerText = "BOCCA CHIUSA";
+                    statusElement.className = "chiusa";
+                }
+            }
+        }
+
+        // Risoluzione ridotta per massimizzare la velocità
+        const camera = new Camera(videoElement, {
+            onFrame: async () => { await faceMesh.send({ image: videoElement }); },
+            width: 320,
+            height: 240,
+            facingMode: "user"
+        });
+        
+        camera.start().catch(err => {
+            statusElement.innerText = "Errore webcam: " + err;
+        });
+    </script>
+</body>
+</html>
