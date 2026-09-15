@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rilevatore F</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #222; color: white; }
+        #video { transform: scaleX(-1); width: 100%; max-width: 320px; border-radius: 10px; }
+        #status { font-size: 2rem; font-weight: bold; margin-top: 20px; padding: 10px; }
+        .aperta { color: #4CAF50; }
+        .chiusa { color: #F44336; }
+        
+        /* Pulsante per autorizzare le notifiche al primo accesso */
+        #btnNotifiche {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            display: none; /* Nascosto di default */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rilevatore Bocca</h1>
+    
+    <button id="btnNotifiche" onclick="richiediPermessoNotifiche()">Abilita Notifiche Mobile</button>
+    
+    <br>
+    <video id="video" autoplay playsinline></video>
+    <div id="status">Inizializzazione...</div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const statusElement = document.getElementById('status');
+        const btnNotifiche = document.getElementById('btnNotifiche');
+        
+        let statoBocca = "chiusa"; 
+        const SOGLIA = 0.025;
+
+        // Variabile per gestire il tempo di chiusura della notifica (in millisecondi)
+        const TEMPO_NOTIFICA_MS = 3000;
+
+        // Verifica se mostrare il pulsante per la prima autorizzazione
+        if ("Notification" in window) {
+            if (Notification.permission === "default") {
+                btnNotifiche.style.display = "inline-block";
+            }
+        }
+
+        function richiediPermessoNotifiche() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        btnNotifiche.style.display = "none";
+                    } else {
+                        alert("Permesso notifiche negato.");
+                    }
+                });
+            }
+        }
+
+        const faceMesh = new FaceMesh({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+        });
+
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        faceMesh.onResults(onResults);
+
+        // Funzione per mostrare la notifica anziché scaricare il file
+        function mostraNotifica() {
+            if ("Notification" in window && Notification.permission === "granted") {
+                const options = {
+                    silent: true // Rimuove il suono della notifica
+                };
+
+                // Notifica contenente solo il testo "bocca_aperta"
+                const notifica = new Notification("bocca_aperta", options);
+
+                // Chiusura automatica dopo il tempo stabilito (3 secondi)
+                setTimeout(() => {
+                    notifica.close();
+                }, TEMPO_NOTIFICA_MS);
+            }
+        }
+
+        function onResults(results) {
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+                statusElement.innerText = "Faccia non rilevata";
+                statusElement.className = "";
+                return;
+            }
+
+            const landmarks = results.multiFaceLandmarks[0];
+            const distance = Math.sqrt(
+                Math.pow(landmarks[13].x - landmarks[14].x, 2) + 
+                Math.pow(landmarks[13].y - landmarks[14].y, 2)
+            );
+
+            if (distance > SOGLIA) {
+                if (statoBocca === "chiusa") {
+                    statoBocca = "aperta";
+                    statusElement.innerText = "BOCCA APERTA";
+                    statusElement.className = "aperta";
+                }
+            } else {
+                if (statoBocca === "aperta") {
+                    statoBocca = "chiusa";
+                    statusElement.innerText = "BOCCA CHIUSA";
+                    statusElement.className = "chiusa";
+
+                    // TRIGGER: Mostra la notifica del browser
+                    mostraNotifica();
+                } else {
+                    statoBocca = "chiusa";
+                    statusElement.innerText = "BOCCA CHIUSA";
+                    statusElement.className = "chiusa";
+                }
+            }
+        }
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => { await faceMesh.send({ image: videoElement }); },
+            width: 320,
+            height: 240,
+            facingMode: "user"
+        });
+        
+        camera.start().catch(err => {
+            statusElement.innerText = "Errore webcam: " + err;
+        });
+    </script>
+</body>
+</html>
