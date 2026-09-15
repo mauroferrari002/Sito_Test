@@ -29,6 +29,14 @@
         let statoBocca = "chiusa"; 
         const SOGLIA = 0.025;
 
+        // Tempo di durata della notifica prima che si chiuda (in millisecondi)
+        const TEMPO_NOTIFICA_MS = 3000;
+
+        // Richiedi il permesso per inviare notifiche al caricamento della pagina
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
         const faceMesh = new FaceMesh({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
         });
@@ -42,19 +50,16 @@
 
         faceMesh.onResults(onResults);
 
-        // Funzione per generare e scaricare il file al volo
-        function scaricaFileTrigger() {
-            const timestamp = Date.now(); // Tempo universale in millisecondi
-            const blob = new Blob([timestamp.toString()], { type: 'text/plain' });
-            const link = document.createElement('a');
-            
-            link.href = URL.createObjectURL(blob);
-            link.download = 'bocca_chiusa.txt'; // Nome del file salvato in Download
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
+        // Funzione per mostrare la notifica del browser
+        function mostraNotifica() {
+            if ("Notification" in window && Notification.permission === "granted") {
+                const notifica = new Notification("bocca_aperta");
+
+                // Chiudi la notifica automaticamente dopo il tempo stabilito
+                setTimeout(() => {
+                    notifica.close();
+                }, TEMPO_NOTIFICA_MS);
+            }
         }
 
         function onResults(results) {
@@ -82,8 +87,8 @@
                     statusElement.innerText = "BOCCA CHIUSA";
                     statusElement.className = "chiusa";
 
-                    // TRIGGER: Avvia il download del file
-                    scaricaFileTrigger();
+                    // TRIGGER: Mostra la notifica quando la bocca si chiude dopo essere stata aperta
+                    mostraNotifica();
                 } else {
                     statoBocca = "chiusa";
                     statusElement.innerText = "BOCCA CHIUSA";
